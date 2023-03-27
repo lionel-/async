@@ -52,6 +52,7 @@ external_process <- function(process_generator, error_on_status = TRUE,
   process_generator; error_on_status; args <- list(...)
   args$encoding <- args$encoding %||% ""
   args$cleanup_tree <- args$cleanup_tree %||% TRUE
+  args$poll_connection <- args$poll_connection %||% TRUE
 
   id <- NULL
 
