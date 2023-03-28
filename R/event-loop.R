@@ -368,6 +368,14 @@ el__io_poll <- function(self, private, timeout) {
     for (id in pollables$id[proc_ready]) {
       p <- private$tasks[[id]]
       private$tasks[[id]] <- NULL
+
+      if (isTRUE(p$data$wrap)) {
+        err <- NULL
+        res <- p$data$process
+        p$callback(err, res)
+        next
+      }
+
       ## TODO: this should be async
       p$data$process$wait(1000)
       encoding <- p$data$encoding

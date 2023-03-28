@@ -99,3 +99,18 @@ test_that("can create processes with output connections", {
   expect_null(res$stderr)
   expect_false(res$timeout)
 })
+
+test_that("can wrap existing processes", {
+  px <- asNamespace("processx")$get_tool("px")
+
+  pxi <- processx::process$new(
+    px,
+    c("sleep", "0.3"),
+    poll_connection = TRUE
+  )
+
+  out <- async::synchronise({
+    async::external_process(pxi)
+  })
+  expect_false(out$is_alive())
+})

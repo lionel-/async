@@ -50,8 +50,19 @@ external_process <- function(process_generator, error_on_status = TRUE,
                              ...) {
 
   process_generator; error_on_status; args <- list(...)
-  args$encoding <- args$encoding %||% ""
-  args$poll_connection <- args$poll_connection %||% TRUE
+
+  wrap <- inherits(process_generator, "process")
+  if (wrap) {
+    if (length(args)) {
+      stop("Can't pass arguments to already started process.")
+    }
+    if (!process_generator$has_poll_connection()) {
+      stop("Process must have a poll connection.")
+    }
+  } else {
+    args$encoding <- args$encoding %||% ""
+    args$poll_connection <- args$poll_connection %||% TRUE
+  }
 
   id <- NULL
 
@@ -60,7 +71,13 @@ external_process <- function(process_generator, error_on_status = TRUE,
     action = function(resolve) {
       resolve
       reject <- environment(resolve)$private$reject
-      px <- do.call(process_generator, args)
+
+      if (wrap) {
+        px <- process_generator
+      } else {
+        px <- do.call(process_generator, args)
+      }
+
       stdout <- px$get_output_file()
       stderr <- px$get_error_file()
       pipe <- px$get_poll_connection()
@@ -68,7 +85,7 @@ external_process <- function(process_generator, error_on_status = TRUE,
         list(pipe),
         function(err, res) if (is.null(err)) resolve(res) else reject(err),
         list(process = px, stdout = stdout, stderr = stderr,
-             error_on_status = TRUE, encoding = args$encoding)
+             error_on_status = TRUE, wrap = wrap, encoding = args$encoding)
       )
     },
     on_cancel = function(reason) {
