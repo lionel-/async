@@ -131,10 +131,14 @@ test_that("subprocesses are cancelled by default (#74)", {
 
 test_that("can create processes with output connections", {
   px <- asNamespace("processx")$get_tool("px")
+
+  # Emit a large amount of lines to fill buffer
+  cmds <- rep(c("outln", "foo bar", "errln", "baz"), 2050)
+
   pxgen <- function(...) {
     processx::process$new(
       px,
-      c("outln", "foo", "errln", "bar"),
+      cmds,
       stdout = "|",
       stderr = "2>&1",
       ...
@@ -145,7 +149,11 @@ test_that("can create processes with output connections", {
 
   res <- synchronise(afun())
   expect_equal(res$status, 0L)
-  expect_match(res$stdout, "foo\r?\nbar")
   expect_null(res$stderr)
   expect_false(res$timeout)
+
+  expect_equal(
+    gsub("\r", "", res$stdout),
+    paste0(strrep("foo bar\nbaz\n", 2049), "foo bar\nbaz")
+  )
 })
