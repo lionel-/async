@@ -430,6 +430,11 @@ el__io_poll <- function(self, private, timeout) {
       if (p$data$error_on_status && (error || res$status != 0)) {
         err <- make_error("process exited with non-zero status")
         err$data <- res
+        err$parent <- res$result
+
+        # Show chained errors
+        class(err) <- c("rlang_error", "error", "condition")
+
         res <- NULL
       } else {
         err <- NULL
