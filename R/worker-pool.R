@@ -150,7 +150,7 @@ worker_pool_size <- function() {
 }
 
 wp_kill_workers <- function(self, private) {
-  lapply(private$workers$session, function(x) x$kill())
+  lapply(private$workers$session, function(x) x$kill(signal = tools::SIGTERM))
   private$workers <- NULL
   invisible()
 }

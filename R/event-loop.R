@@ -182,7 +182,7 @@ el_cancel <- function(self, private, id) {
     multi_cancel(private$tasks[[id]]$data$handle)
   } else if (id %in% names(private$tasks) &&
              private$tasks[[id]]$type %in% c("process", "r-process")) {
-    private$tasks[[id]]$data$process$kill()
+    private$tasks[[id]]$data$process$kill(signal = tools::SIGTERM)
   } else if (id %in% names(private$tasks) &&
              private$tasks[[id]]$type == "pool-task") {
     async_env$worker_pool$cancel_task(id)
@@ -415,7 +415,13 @@ el__io_poll <- function(self, private, timeout) {
         timeout = FALSE
       )
 
+      # Try to gracefully quit the process to clean up temporary files
+      p$data$process$kill(signal = ps::signals()$SIGTERM)
+
+      # TODO: Do this in a delay
+      Sys.sleep(0.2)
       p$data$process$kill()
+
       for (b in p$data$buffers) b$done()
 
       error <- FALSE
